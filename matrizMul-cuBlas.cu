@@ -106,9 +106,9 @@ main(int argc, char *argv[])
   check_memoria( numElemA, numElemB, numElemC );
 
 
-  const int m = NA;
-  const int n = YB;
-  const int k = YA;
+  const int m = YA;
+  const int n = NB;
+  const int k = NA;
 
   const int lda = YA;
   const int ldb = YB;
