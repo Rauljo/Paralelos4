@@ -110,7 +110,7 @@ main(int argc, char *argv[])
   const int n = YB;
   const int k = YA;
 
-  const int lda = NA;
+  const int lda = YA;
   const int ldb = NB;
   const int ldc = NA;
 
