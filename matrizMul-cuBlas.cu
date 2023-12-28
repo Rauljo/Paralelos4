@@ -46,37 +46,14 @@ void check_memoria(const unsigned int matrizDim);
  * Codigo host
  */
 __host__ void
-h_matrizMul(const basetype *A, const basetype *B, basetype *C, unsigned int matrizDim)
+h_matrizMul(const basetype *A, const basetype *B, basetype *C, unsigned int NA, unsigned int YB, unsigned int YA)
 {
-  for (unsigned int i = 0; i < matrizDim; ++i)
-    for (unsigned int j = 0; j < matrizDim; ++j) {
+  for (unsigned int i = 0; i < NA; ++i)
+    for (unsigned int j = 0; j < YB; ++j) {
       basetype sum = (basetype) 0.0;
-      for (unsigned int k = 0; k < matrizDim; ++k)
-        sum += A[i*matrizDim + k]*B[k*matrizDim + j];
-      C[i*matrizDim + j] = sum;
-  }
-}
-
-/**
- * Codigo CUDA
- * Cada thread computa un elemento de C
- */
-__global__ void
-matrizMul(const basetype *A, const basetype *B, basetype *C, unsigned int matrizDim)
-{
-  // TODO: Calcula el indice de la fila de C y A
-  int i = (blockDim.y * blockIdx.y + threadIdx.y);
-  // TODO Calcula el indice de la columna de C y B
-  int j = (blockDim.x * blockIdx.x + threadIdx.x);
-
-  if ((i < matrizDim) && (j < matrizDim))
-  {
-    basetype sum = (basetype) 0.0;
-    for(unsigned int k = 0; k < matrizDim; ++k)
-    {
-      sum += A[i*matrizDim + k]*B[k*matrizDim + j];
-    }
-    C[i*matrizDim + j] = sum;
+      for (unsigned int k = 0; k < YA; ++k)
+        sum += A[i*YA + k]*B[k*YB + j];
+      C[i*YB + j] = sum;
   }
 }
 
@@ -89,11 +66,34 @@ main(int argc, char *argv[])
 {
   basetype *h_A=NULL, *h_B=NULL, *h_C=NULL, *h_C2=NULL;
   basetype *d_A=NULL, *d_B=NULL, *d_C=NULL;
-  unsigned int matrizDim = 1, tpbdim = 1, numElem = 1;
-  size_t size = 0;
+  unsigned int numElemA = 1, numElemB = 1, numElemC = 1;
+  unsigned int NA = 1, YA = 1, NB = 1, YB = 1;
+  unsigned int tpbdimX=1, tpbdimY=1;
+  size_t sizeA = 0, sizeB = 0, sizeC = 0;
   // Valores para la medida de tiempos
   struct timespec tstart, tend;
   double tint;
+
+  //####################AÑADIDO####################
+  /*Ahora se recibirán 4 argumentos que indican el tamaño de las matrices NA, YA, NB e YB. El problema
+  es que ahora la matriz resultante tendrá dimensiones diferentes que A y B. */
+  NA = (argc > 1) ? atoi(argv[1]):MATDIMDEF;
+  YA = (argc > 2) ? atoi(argv[2]):MATDIMDEF;
+  NB = (argc > 3) ? atoi(argv[3]):MATDIMDEF;
+  YB = (argc > 4) ? atoi(argv[4]):MATDIMDEF;
+
+  if (YA != NB){
+    printf("Error: las matrices no se pueden multiplicar\n");
+    exit(EXIT_FAILURE);
+  }
+
+  numElemA = NA*YA;
+  numElemB = NB*YB;
+  numElemC = NA*YB;
+
+  sizeA = numElemA * sizeof(basetype);
+  sizeB = numElemB * sizeof(basetype);
+  sizeC = numElemC * sizeof(basetype);
 
   cublasHandle_t cublasH = NULL;
   cudaStream_t stream = NULL;
@@ -103,44 +103,25 @@ main(int argc, char *argv[])
   cublasOperation_t transa = CUBLAS_OP_T;
   cublasOperation_t transb = CUBLAS_OP_T;
 
-  // Tamanho de los vectores
-  matrizDim = (argc > 1) ? atoi(argv[1]):MATDIMDEF;
-  // Número de elementos de las matrices
-  numElem = matrizDim*matrizDim;
-  // Tamanho de las matrices en bytes
-  size = numElem * sizeof(basetype);
 
-  // Numero de threads por cada dimension  del bloque
-  tpbdim = (argc > 2) ? atoi(argv[2]):TPBDIMDEF;
-  // Comprueba si es superior al máximo
-  tpbdim = (tpbdim > MAX_TH_PER_BLOCK_DIM) ? MAX_TH_PER_BLOCK_DIM:tpbdim;
+    check_memoria( numElemA, numElemB, numElemC );
 
-  check_memoria( numElem );
 
-  const int m = matrizDim;
-  const int n = matrizDim;
-  const int k = matrizDim;
+  const int m = NA;
+  const int n = YB;
+  const int k = YA;
 
-  const int lda = matrizDim;
-  const int ldb = matrizDim;
-  const int ldc = matrizDim;
+  const int lda = NA;
+  const int ldb = NB;
+  const int ldc = NA;
 
   const float alpha = 1.0;
   const float beta = 0.0;
 
-  // Caracteristicas del Grid
-  // Hilos por bloque: primer parámetro dim_x, segundo dim_y
-  dim3 threadsPerBlock( tpbdim, tpbdim, 1 );
-  // TODO: Calcula el número de bloques en el Grid (bidimensional)
-  dim3 blocksPerGrid( (matrizDim + threadsPerBlock.x -1 ) / threadsPerBlock.x, (matrizDim + threadsPerBlock.y -1 ) / threadsPerBlock.y, 1 );
-
-  printf("Multiplicación de matrices de dimension (%u,%u), con (%u,%u) bloques de (%u,%u) threads\n",
-    matrizDim, matrizDim, blocksPerGrid.x, blocksPerGrid.y, threadsPerBlock.x, threadsPerBlock.y);
-
-  h_A = (basetype *) malloc(size);
-  h_B = (basetype *) malloc(size);
-  h_C = (basetype *) malloc(size);
-  h_C2 = (basetype *) malloc(size);
+  h_A = (basetype *) malloc(sizeA);
+  h_B = (basetype *) malloc(sizeB);
+  h_C = (basetype *) malloc(sizeC);
+  h_C2 = (basetype *) malloc(sizeC);
 
   // Comprueba errores
   if (h_A == NULL || h_B == NULL || h_C == NULL)
@@ -149,31 +130,24 @@ main(int argc, char *argv[])
     exit(EXIT_FAILURE);
   }
 
-  // Inicializa las matrices en el host
-  for (int i = 0; i < numElem; ++i)
-  {
+  // Inicializamos las matrices por separado
+  for (int i = 0; i < numElemA; i++){
     h_A[i] = rand()/(basetype)RAND_MAX;
+  }
+
+  for (int i = 0; i < numElemB; i++){
     h_B[i] = rand()/(basetype)RAND_MAX;
   }
 
-  printf("Matriz A\n");
-  print_matrix(m, k, h_A, lda);
-  printf("Matriz B\n");
-  print_matrix(k, n, h_B, ldb);
-
-  printf("IMpresion casera: \n");
-  printf("1: %f, 2: %f, 3: %f, 4: %f\n", h_A[0], h_A[1], h_A[2], h_A[3]);
 
 
   // Inicio tiempo
   TSET(tstart);
   //clock_gettime( CLOCK_MONOTONIC, &tstart );
   // Multiplica las matrices en el host
-  h_matrizMul( h_A, h_B, h_C, matrizDim );
+  h_matrizMul( h_A, h_B, h_C, NA, YB, YA);
 
   
-  printf("Resultado normal\n");
-  print_matrix(m, n, h_C, ldc);
   // Fin tiempo
   TSET( tend );
   tint = TINT(tstart, tend);
@@ -191,14 +165,14 @@ main(int argc, char *argv[])
 
   //STEP 2: Copy data to device
   // Reserva memoria para las matrices en el dispositivo
-  checkError( cudaMalloc((void **) &d_A, size) );
-  checkError( cudaMalloc((void **) &d_B, size) );
-  checkError( cudaMalloc((void **) &d_C, size) );
+  checkError( cudaMalloc((void **) &d_A, sizeA) );
+  checkError( cudaMalloc((void **) &d_B, sizeB) );
+  checkError( cudaMalloc((void **) &d_C, sizeC) );
 
   
   // Copia las matrices h_A y h_B del host al dispositivo
-  checkError( cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice) );
-  checkError( cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice) );
+  checkError( cudaMemcpy(d_A, h_A, sizeA, cudaMemcpyHostToDevice) );
+  checkError( cudaMemcpy(d_B, h_B, sizeB, cudaMemcpyHostToDevice) );
 
   //CUDA_CHECK(cudaMemcpyAsync(d_A, h_A, size, cudaMemcpyHostToDevice, stream));
   //CUDA_CHECK(cudaMemcpyAsync(d_B, h_B, size, cudaMemcpyHostToDevice, stream));
@@ -219,14 +193,12 @@ main(int argc, char *argv[])
   checkError( cudaDeviceSynchronize() );
 
   // Copia el vector resultado del dispositivo al host
-  checkError( cudaMemcpy(h_C2, d_C, size, cudaMemcpyDeviceToHost) );
+  checkError( cudaMemcpy(h_C2, d_C, sizeC, cudaMemcpyDeviceToHost) );
 
   //checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
   //CUDA_CHECK(cudaStreamSynchronize(stream));
 
-  
-  printf("\nResultado cublas\n");
-  print_matrix(m, n, h_C2, ldc);
+
   // Fin tiempo multiplicacion GPU
   TSET( tend );
   // Calcula tiempo para la multiplicacion GPU
@@ -238,11 +210,11 @@ main(int argc, char *argv[])
 
   //###################################CAMBIO###################################
   //Se cambia la verificación porque la salida en Cublas es en column-major form, mientras que h_c está en row-major form
-  for (unsigned int i = 0; i < matrizDim; ++i)
+  for (unsigned int i = 0; i < NA; ++i)
   {
-    for(unsigned int j=0; j < matrizDim; j++)
+    for(unsigned int j=0; j < YB; j++)
     {
-      if (fabs(h_C2[i*matrizDim + j] - h_C[j*matrizDim + i]) > 1e-3)
+      if (fabs(h_C2[i*NA + j] - h_C[j*YB + i]) > 1e-3)
       {
         fprintf(stderr, "Verificacion de resultados falla en el elemento %d!\n", i);
         exit(EXIT_FAILURE);
@@ -268,13 +240,16 @@ main(int argc, char *argv[])
 }
 
 void
-check_memoria(const unsigned int numElem)
+check_memoria(const unsigned int numElemA, const unsigned int numElemB, const unsigned int numElemC)
 {
   cudaDeviceProp prop;
   checkError( cudaGetDeviceProperties(&prop, 0) );
 
   size_t gmem = prop.totalGlobalMem;
-  size_t bytes_arrays = 3*numElem*sizeof(basetype);
+  //########################AÑADIDO########################
+  //Ahora cada matriz tiene un numero de elementos diferente
+  size_t bytes_arrays = numElemA*sizeof(basetype) + numElemB*sizeof(basetype) + numElemC*sizeof(basetype);
+  //#########################################################
   double gib = (double)(1073741824.0);
 
   printf( "GiB ocupados en la GPU: %g GiB, memoria global %g GiB\n", bytes_arrays/gib, gmem/gib );
