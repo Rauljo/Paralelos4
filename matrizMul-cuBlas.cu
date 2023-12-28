@@ -106,13 +106,13 @@ main(int argc, char *argv[])
   check_memoria( numElemA, numElemB, numElemC );
 
 
-  const int m = YA;
-  const int n = NB;
-  const int k = NA;
+  const int m = NA;
+  const int n = YB;
+  const int k = YA;
 
-  const int lda = YA;
-  const int ldb = YB;
-  const int ldc = YA;
+  const int lda = NA;
+  const int ldb = NB;
+  const int ldc = NA;
 
   const float alpha = 1.0;
   const float beta = 0.0;
