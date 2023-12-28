@@ -100,8 +100,8 @@ main(int argc, char *argv[])
 
   
 
-  cublasOperation_t transa = CUBLAS_OP_T;
-  cublasOperation_t transb = CUBLAS_OP_T;
+  cublasOperation_t transa = CUBLAS_OP_C;
+  cublasOperation_t transb = CUBLAS_OP_C;
 
   // Tamanho de los vectores
   matrizDim = (argc > 1) ? atoi(argv[1]):MATDIMDEF;
