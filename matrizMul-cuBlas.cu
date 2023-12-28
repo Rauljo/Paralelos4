@@ -207,6 +207,10 @@ main(int argc, char *argv[])
   checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
   CUDA_CHECK(cudaStreamSynchronize(stream));
 
+
+  printf("Resultado normal\n");
+  print_matrix(m, n, h_C, ldc);
+  printf("\nResultado cublas\n");
   print_matrix(m, n, h_C2, ldc);
   // Fin tiempo multiplicacion GPU
   TSET( tend );
