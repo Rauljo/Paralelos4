@@ -153,13 +153,13 @@ main(int argc, char *argv[])
   // Inicio tiempo multiplicacion GPU
   TSET( tstart );
 
-  const int m = 1000;
-  const int n = 1000;
-  const int k = 1000;
+  const int m = matrizDim;
+  const int n = matrizDim;
+  const int k = matrizDim;
 
-  const int lda = 1;
-  const int ldb = 1;
-  const int ldc = 1;
+  const int lda = matrizDim;
+  const int ldb = matrizDim;
+  const int ldc = matrizDim;
 
   const float alpha = 1.0;
   const float beta = 0.0;
