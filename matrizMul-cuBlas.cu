@@ -100,8 +100,8 @@ main(int argc, char *argv[])
 
   
 
-  cublasOperation_t transa = CUBLAS_OP_C;
-  cublasOperation_t transb = CUBLAS_OP_C;
+  cublasOperation_t transa = CUBLAS_OP_T;
+  cublasOperation_t transb = CUBLAS_OP_T;
 
   // Tamanho de los vectores
   matrizDim = (argc > 1) ? atoi(argv[1]):MATDIMDEF;
@@ -235,13 +235,20 @@ main(int argc, char *argv[])
 
 
   // Verifica que la multiplicacion es correcta
-  for (unsigned int i = 0; i < numElem; ++i)
+
+  //###################################CAMBIO###################################
+  //Se cambia la verificación porque la salida en Cublas es en column-major form, mientras que h_c está en row-major form
+  for (unsigned int i = 0; i < matrizDim; ++i)
   {
-    if (fabs(h_C2[i] - h_C[i]) > 1e-3)
+    for(unsigned int j=0; j < matrizDim; j++)
     {
-      fprintf(stderr, "Verificacion de resultados falla en el elemento %d!\n", i);
-      exit(EXIT_FAILURE);
+      if (fabs(h_C2[i*matrizDim + j] - h_C[j*matrizDim + i]) > 1e-3)
+      {
+        fprintf(stderr, "Verificacion de resultados falla en el elemento %d!\n", i);
+        exit(EXIT_FAILURE);
+      }
     }
+    
   }
 
   printf("Multiplicacion correcta.\n");
