@@ -98,6 +98,20 @@ main(int argc, char *argv[])
   cublasHandle_t cublasH = NULL;
   cudaStream_t stream = NULL;
 
+  const int m = matrizDim;
+  const int n = matrizDim;
+  const int k = matrizDim;
+
+  const int lda = matrizDim;
+  const int ldb = matrizDim;
+  const int ldc = matrizDim;
+
+  const float alpha = 1.0;
+  const float beta = 0.0;
+
+  cublasOperation_t transa = CUBLAS_OP_N;
+  cublasOperation_t transb = CUBLAS_OP_N;
+
   // Tamanho de los vectores
   matrizDim = (argc > 1) ? atoi(argv[1]):MATDIMDEF;
   // Número de elementos de las matrices
@@ -140,11 +154,24 @@ main(int argc, char *argv[])
     h_B[i] = rand()/(basetype)RAND_MAX;
   }
 
+  printf("Matriz A\n");
+  print_matrix(m, k, h_A, lda);
+  printf("Matriz B\n");
+  print_matrix(k, n, h_B, ldb);
+
+  printf("IMpresion casera: \n");
+  printf("1: %f, 2: %f, 3: %f, 4: %f\n", h_A[0], h_A[1], h_A[2], h_A[3]);
+
+
   // Inicio tiempo
   TSET(tstart);
   //clock_gettime( CLOCK_MONOTONIC, &tstart );
   // Multiplica las matrices en el host
   h_matrizMul( h_A, h_B, h_C, matrizDim );
+
+  
+  printf("Resultado normal\n");
+  print_matrix(m, n, h_C, ldc);
   // Fin tiempo
   TSET( tend );
   tint = TINT(tstart, tend);
@@ -153,19 +180,7 @@ main(int argc, char *argv[])
   // Inicio tiempo multiplicacion GPU
   TSET( tstart );
 
-  const int m = matrizDim;
-  const int n = matrizDim;
-  const int k = matrizDim;
-
-  const int lda = matrizDim;
-  const int ldb = matrizDim;
-  const int ldc = matrizDim;
-
-  const float alpha = 1.0;
-  const float beta = 0.0;
-
-  cublasOperation_t transa = CUBLAS_OP_N;
-  cublasOperation_t transb = CUBLAS_OP_N;
+  
 
   //STEP 1: Create cublas handle
   CUBLAS_CHECK(cublasCreate(&cublasH));
@@ -207,12 +222,7 @@ main(int argc, char *argv[])
   //checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
   //CUDA_CHECK(cudaStreamSynchronize(stream));
 
-  printf("Matriz A\n");
-  print_matrix(m, k, h_A, lda);
-  printf("Matriz B\n");
-  print_matrix(k, n, h_B, ldb);
-  printf("Resultado normal\n");
-  print_matrix(m, n, h_C, ldc);
+  
   printf("\nResultado cublas\n");
   print_matrix(m, n, h_C2, ldc);
   // Fin tiempo multiplicacion GPU
