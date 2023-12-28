@@ -110,8 +110,8 @@ main(int argc, char *argv[])
   const int n = YB;
   const int k = YA;
 
-  const int lda = NA;
-  const int ldb = NB;
+  const int lda = YA;
+  const int ldb = YB;
   const int ldc = NA;
 
   const float alpha = 1.0;
@@ -145,7 +145,7 @@ main(int argc, char *argv[])
   // Multiplica las matrices en el host
   h_matrizMul( h_A, h_B, h_C, NA, YB, YA);
 
-  print_matrix(m, n, h_C, ldc);
+  //print_matrix(m, n, h_C, ldc);
 
 
   // Fin tiempo
@@ -195,7 +195,7 @@ main(int argc, char *argv[])
   // Copia el vector resultado del dispositivo al host
   checkError( cudaMemcpy(h_C2, d_C, sizeC, cudaMemcpyDeviceToHost) );
 
-  print_matrix(m, n, h_C2, ldc);
+  //print_matrix(m, n, h_C2, ldc);
 
 
   //checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
