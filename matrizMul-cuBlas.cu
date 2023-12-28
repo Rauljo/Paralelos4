@@ -40,7 +40,7 @@ inline void asserError(cudaError_t code, const char *file, int line, bool abort=
 // Tipo de datos
 typedef float basetype;
 
-void check_memoria(const unsigned int matrizDim);
+void check_memoria(const unsigned int numElemA, const unsigned int numElemB, const unsigned int numElemC);
 
 /**
  * Codigo host
@@ -68,7 +68,6 @@ main(int argc, char *argv[])
   basetype *d_A=NULL, *d_B=NULL, *d_C=NULL;
   unsigned int numElemA = 1, numElemB = 1, numElemC = 1;
   unsigned int NA = 1, YA = 1, NB = 1, YB = 1;
-  unsigned int tpbdimX=1, tpbdimY=1;
   size_t sizeA = 0, sizeB = 0, sizeC = 0;
   // Valores para la medida de tiempos
   struct timespec tstart, tend;
@@ -104,7 +103,7 @@ main(int argc, char *argv[])
   cublasOperation_t transb = CUBLAS_OP_T;
 
 
-    check_memoria( numElemA, numElemB, numElemC );
+  check_memoria( numElemA, numElemB, numElemC );
 
 
   const int m = NA;
