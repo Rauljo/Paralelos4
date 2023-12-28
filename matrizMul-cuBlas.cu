@@ -111,7 +111,7 @@ main(int argc, char *argv[])
   const int k = YA;
 
   const int lda = NA;
-  const int ldb = NB;
+  const int ldb = YB;
   const int ldc = NA;
 
   const float alpha = 1.0;
