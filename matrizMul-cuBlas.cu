@@ -98,16 +98,7 @@ main(int argc, char *argv[])
   cublasHandle_t cublasH = NULL;
   cudaStream_t stream = NULL;
 
-  const int m = matrizDim;
-  const int n = matrizDim;
-  const int k = matrizDim;
-
-  const int lda = matrizDim;
-  const int ldb = matrizDim;
-  const int ldc = matrizDim;
-
-  const float alpha = 1.0;
-  const float beta = 0.0;
+  
 
   cublasOperation_t transa = CUBLAS_OP_N;
   cublasOperation_t transb = CUBLAS_OP_N;
@@ -125,6 +116,17 @@ main(int argc, char *argv[])
   tpbdim = (tpbdim > MAX_TH_PER_BLOCK_DIM) ? MAX_TH_PER_BLOCK_DIM:tpbdim;
 
   check_memoria( numElem );
+
+  const int m = matrizDim;
+  const int n = matrizDim;
+  const int k = matrizDim;
+
+  const int lda = matrizDim;
+  const int ldb = matrizDim;
+  const int ldc = matrizDim;
+
+  const float alpha = 1.0;
+  const float beta = 0.0;
 
   // Caracteristicas del Grid
   // Hilos por bloque: primer parámetro dim_x, segundo dim_y
