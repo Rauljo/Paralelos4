@@ -139,14 +139,15 @@ main(int argc, char *argv[])
   }
 
 
-
   // Inicio tiempo
   TSET(tstart);
   //clock_gettime( CLOCK_MONOTONIC, &tstart );
   // Multiplica las matrices en el host
   h_matrizMul( h_A, h_B, h_C, NA, YB, YA);
 
-  
+  print_matrix(m, n, h_C, ldc);
+
+
   // Fin tiempo
   TSET( tend );
   tint = TINT(tstart, tend);
@@ -193,6 +194,9 @@ main(int argc, char *argv[])
 
   // Copia el vector resultado del dispositivo al host
   checkError( cudaMemcpy(h_C2, d_C, sizeC, cudaMemcpyDeviceToHost) );
+
+  print_matrix(m, n, h_C2, ldc);
+
 
   //checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
   //CUDA_CHECK(cudaStreamSynchronize(stream));
