@@ -207,7 +207,10 @@ main(int argc, char *argv[])
   //checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
   //CUDA_CHECK(cudaStreamSynchronize(stream));
 
-
+  printf("Matriz A\n");
+  print_matrix(m, k, h_A, lda);
+  printf("Matriz B\n");
+  print_matrix(k, n, h_B, ldb);
   printf("Resultado normal\n");
   print_matrix(m, n, h_C, ldc);
   printf("\nResultado cublas\n");
