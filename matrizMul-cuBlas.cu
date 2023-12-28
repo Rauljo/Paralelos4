@@ -38,7 +38,7 @@ inline void asserError(cudaError_t code, const char *file, int line, bool abort=
 #define TPBDIMDEF 4
 
 // Tipo de datos
-typedef double basetype;
+typedef float basetype;
 
 void check_memoria(const unsigned int matrizDim);
 
@@ -161,8 +161,8 @@ main(int argc, char *argv[])
   const int ldb = 1;
   const int ldc = 1;
 
-  const double alpha = 1.0;
-  const double beta = 0.0;
+  const float alpha = 1.0;
+  const float beta = 0.0;
 
   cublasOperation_t transa = CUBLAS_OP_N;
   cublasOperation_t transb = CUBLAS_OP_N;
@@ -187,7 +187,7 @@ main(int argc, char *argv[])
   // TODO: Lanza el kernel CUDA
   matrizMul<<<blocksPerGrid, threadsPerBlock>>>( d_A, d_B, d_C, matrizDim );
 
-  CUBLAS_CHECK(cublasDgemm(cublasH, transa, transb, m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc));
+  CUBLAS_CHECK(cublasSgemm(cublasH, transa, transb, m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc));
 
   // Comprueba si hubo un error al el lanzamiento del kernel
   // Notar que el lanzamiento del kernel es asíncrono por lo que
