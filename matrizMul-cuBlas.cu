@@ -180,12 +180,15 @@ main(int argc, char *argv[])
 
   
   // Copia las matrices h_A y h_B del host al dispositivo
-  checkError( cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice) );
-  checkError( cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice) );
+  //checkError( cudaMemcpy(d_A, h_A, size, cudaMemcpyHostToDevice) );
+  //checkError( cudaMemcpy(d_B, h_B, size, cudaMemcpyHostToDevice) );
+
+  CUDA_CHECK(cudaMemcpyAsync(d_A, h_A, size, cudaMemcpyHostToDevice, stream));
+  CUDA_CHECK(cudaMemcpyAsync(d_B, h_B, size, cudaMemcpyHostToDevice, stream));
 
   //STEP 3: Compute
   // TODO: Lanza el kernel CUDA
-  matrizMul<<<blocksPerGrid, threadsPerBlock>>>( d_A, d_B, d_C, matrizDim );
+  //matrizMul<<<blocksPerGrid, threadsPerBlock>>>( d_A, d_B, d_C, matrizDim );
 
   CUBLAS_CHECK(cublasSgemm(cublasH, transa, transb, m, n, k, &alpha, d_A, lda, d_B, ldb, &beta, d_C, ldc));
 
@@ -199,7 +202,11 @@ main(int argc, char *argv[])
   checkError( cudaDeviceSynchronize() );
 
   // Copia el vector resultado del dispositivo al host
-  checkError( cudaMemcpy(h_C2, d_C, size, cudaMemcpyDeviceToHost) );
+  //checkError( cudaMemcpy(h_C2, d_C, size, cudaMemcpyDeviceToHost) );
+
+  checkError( cudaMemcpyAsync(h_C2, d_C, size, cudaMemcpyDeviceToHost, stream) );
+  CUDA_CHECK(cudaStreamSynchronize(stream));
+
 
   // Fin tiempo multiplicacion GPU
   TSET( tend );
