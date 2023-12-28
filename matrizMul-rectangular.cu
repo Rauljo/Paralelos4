@@ -19,7 +19,6 @@ inline void asserError(cudaError_t code, const char *file, int line, bool abort=
 #define TINT(ts,te) { ( (double) 1000.*( (te).tv_sec - (ts).tv_sec ) + ( (te).tv_nsec - (ts).tv_nsec )/(double) 1.e6 ) }
 
 // Numero maximo de threads por cada dimensión del bloque
-// Consideramos threadsPerBlock.x == threadsPerBlock.y
 //
 #define MAX_TH_PER_BLOCK_DIM 32
 
@@ -32,7 +31,7 @@ inline void asserError(cudaError_t code, const char *file, int line, bool abort=
 // Tipo de datos
 typedef float basetype;
 
-void check_memoria(const unsigned int matrizDim);
+void check_memoria(const unsigned int numElemA, const unsigned int numElemB, const unsigned int numElemC);
 
 /**
  * Codigo host
@@ -83,7 +82,7 @@ main(int argc, char *argv[])
   basetype *d_A=NULL, *d_B=NULL, *d_C=NULL;
   unsigned int numElemA = 1, numElemB = 1, numElemC = 1;
   unsigned int NA = 1, YA = 1, NB = 1, YB = 1;
-  unsigned int tpbdim=1;
+  unsigned int tpbdimX=1, tpbdimY=1;
   size_t sizeA = 0, sizeB = 0, sizeC = 0;
   // Valores para la medida de tiempos
   struct timespec tstart, tend;
@@ -118,15 +117,18 @@ main(int argc, char *argv[])
   //size = numElem * sizeof(basetype);
 
   // Numero de threads por cada dimension  del bloque
-  tpbdim = (argc > 2) ? atoi(argv[5]):TPBDIMDEF;
+  tpbdimX = (argc > 2) ? atoi(argv[5]):TPBDIMDEF;
+  tpbdimY = (argc > 3) ? atoi(argv[6]):TPBDIMDEF;
   // Comprueba si es superior al máximo
-  tpbdim = (tpbdim > MAX_TH_PER_BLOCK_DIM) ? MAX_TH_PER_BLOCK_DIM:tpbdim;
+  tpbdimX = (tpbdimX > MAX_TH_PER_BLOCK_DIM) ? MAX_TH_PER_BLOCK_DIM:tpbdimX;
+  tpbdimY = (tpbdimY > MAX_TH_PER_BLOCK_DIM) ? MAX_TH_PER_BLOCK_DIM:tpbdimY;
+
 
   check_memoria( numElemA, numElemB, numElemC );
 
   // Caracteristicas del Grid
   // Hilos por bloque: primer parámetro dim_x, segundo dim_y
-  dim3 threadsPerBlock( tpbdim, tpbdim, 1 );
+  dim3 threadsPerBlock( tpbdimX, tpbdimY, 1 );
   // TODO: Calcula el número de bloques en el Grid (bidimensional)
   dim3 blocksPerGrid( (YB + threadsPerBlock.x -1 ) / threadsPerBlock.x, (NA + threadsPerBlock.y -1 ) / threadsPerBlock.y, 1 );
 
